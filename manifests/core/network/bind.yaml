@@ -1,0 +1,54 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bind-deployment
+  namespace: core
+spec:
+  selector:
+    matchLabels:
+      app: bind
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bind
+    spec:
+      containers:
+        - name: bind
+          image: cytopia/bind
+          ports:
+            - containerPort: 53
+          env:
+          - name: DNS_FORWARDER
+            value: "8.8.8.8,8.8.4.4"
+          - name: DOCKER_LOGS
+            value: "1"
+          - name: ALLOW_QUERY
+            value: "any"
+          resources:
+            limits:
+              memory: 64Mi
+              cpu: 20m
+            requests:
+              memory: 64Mi
+              cpu: 20m
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: bind-service
+  annotations:
+    lb.kubesphere.io/v1alpha1: openelb
+    protocol.openelb.kubesphere.io/v1alpha1: vip
+    eip.openelb.kubesphere.io/v1alpha2: vip-eip
+spec:
+  selector:
+    app: bind
+  type: LoadBalancer
+  ports:
+    - name: dns
+      protocol: UDP
+      port: 53
+      targetPort: 53
+  externalTrafficPolicy: Cluster

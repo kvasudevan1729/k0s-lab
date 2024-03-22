@@ -1,0 +1,85 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cryptletter-deployment
+  namespace: core
+spec:
+  selector:
+    matchLabels:
+      app: cryptletter
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: cryptletter
+    spec:
+      containers:
+        - name: cryptletter
+          image: scribblerockerz/cryptletter:latest
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              memory: 256Mi
+              cpu: 100m
+            requests:
+              memory: 256Mi
+              cpu: 100m
+          securityContext:
+            runAsUser: 10001
+            runAsGroup: 10001
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: REDIS__ADDRESS
+              value: "redis-service:6379"
+            - name: APP__LOG_LEVEL
+              value: "4"
+            - name: REDIS__PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis
+                  key: REDIS_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cryptletter-service
+  namespace: core
+spec:
+  selector:
+    app: cryptletter
+  ports:
+    - name: cryptletter
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: zerossl-clusterissuer
+    cert-manager.io/duration: 3600h
+  name: cryptletter-ingress
+  namespace: core
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: cryptletter.navkrish.net
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: cryptletter-service
+            port:
+              number: 8080
+  tls:
+    - hosts:
+      - cryptletter.navkrish.net
+      secretName: cryptletter-cert-tls

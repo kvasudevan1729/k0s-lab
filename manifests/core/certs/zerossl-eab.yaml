@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: zerossl-eab-secret
+    namespace: cert-manager
+data:
+    secret: <base64 encoded hmac key from zerossl>

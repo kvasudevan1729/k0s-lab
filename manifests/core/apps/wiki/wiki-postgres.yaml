@@ -1,0 +1,93 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+  namespace: core
+spec:
+  selector:
+    matchLabels:
+      app: wikijs-postgres
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: wikijs-postgres
+    spec:
+      volumes:
+        - name: wikijs-postgres-data-vol
+          persistentVolumeClaim:
+            claimName: wikijs-postgres-data-pvc
+      containers:
+        - name: wikijs-postgres
+          image: postgres:16.2
+          ports:
+            - containerPort: 5432
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: 50m
+            requests:
+              memory: 512Mi
+              cpu: 50m
+          env:
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-config
+                  key: DB_NAME
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-config
+                  key: DB_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wikijs-postgres-password
+                  key: DB_PASSWORD
+          volumeMounts:
+            - name: wikijs-postgres-data-vol
+              mountPath: /var/lib/postgresql/data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wikijs-postgres-service
+spec:
+  selector:
+    app: wikijs-postgres
+  ports:
+    - name: wikijs-postgres
+      protocol: TCP
+      port: 5432
+      targetPort: 5432
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wikijs-postgres-data-pvc
+spec:
+  storageClassName: wikijs
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Mi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: wikijs-pv
+  labels:
+    type: local
+spec:
+  storageClassName: wikijs
+  capacity:
+    storage: 20Mi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/opt/k0s/wikijs-data"

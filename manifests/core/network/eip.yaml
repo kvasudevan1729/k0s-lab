@@ -1,0 +1,11 @@
+apiVersion: network.kubesphere.io/v1alpha2
+kind: Eip
+metadata:
+  name: eip-sample-pool
+  namespace: openelb-system
+  annotations:
+    eip.openelb.kubesphere.io/is-default-eip: "true"
+spec:
+  address: 192.168.1.91-192.168.1.100
+  protocol: layer2
+  interface: eth0

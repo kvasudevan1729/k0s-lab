@@ -1,0 +1,7 @@
+apiVersion: network.kubesphere.io/v1alpha2
+kind: Eip
+metadata:
+  name: vip-eip
+spec:
+  address: 192.168.1.91-192.168.1.100
+  protocol: vip

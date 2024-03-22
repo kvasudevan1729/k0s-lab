@@ -1,0 +1,96 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wikijs-deployment
+  namespace: core
+spec:
+  selector:
+    matchLabels:
+      app: wikijs
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: wikijs
+    spec:
+      containers:
+        - name: wikijs
+          image: ghcr.io/requarks/wiki:2
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+          resources:
+            limits:
+              memory: 256Mi
+              cpu: 50m
+            requests:
+              memory: 256Mi
+              cpu: 50m
+          env:
+            - name: DB_HOST
+              value: "wikijs-postgres-service"
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-config
+                  key: DB_PORT
+            - name: DB_TYPE
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-config
+                  key: DB_TYPE
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-config
+                  key: DB_NAME
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-config
+                  key: DB_USER
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: wikijs-postgres-password
+                  key: DB_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wikijs-service
+spec:
+  selector:
+    app: wikijs
+  ports:
+    - name: wikijs
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: zerossl-clusterissuer
+    cert-manager.io/duration: 3600h
+  name: wikijs-ingress
+  namespace: core
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: wikijs.navkrish.net
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: wikijs-service
+            port:
+              number: 3000
+  tls:
+    - hosts:
+      - wikijs.navkrish.net
+      secretName: wikijs-cert-tls

@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1 
+kind: Kustomization        
+resources:                 
+  - certs/cluster-issuer.yaml
+  - certs/zerossl-eab.yaml
+  - certs/zerossl-route53-credentials.yaml
+  - network/bind.yaml
+  - network/vip.yaml
+  - apps/redis.yaml
+  - apps/redis-password.yaml
+  - apps/redis-commander.yaml
+  - apps/cryptletter.yaml
+  - apps/wiki/wiki-configmap.yaml
+  - apps/wiki/postgres-password.yaml
+  - apps/wiki/wiki-postgres.yaml
+  - apps/wiki/wikijs.yaml
