@@ -23,7 +23,7 @@ In particular, the demo setup shows:
 
 Before we can deploy our services, we need to prepare our environment.
 
-## k0s
+### k0s
 
 To configure k0s as a single node backend, see instructions here: https://docs.k0sproject.io/v0.9.0/k0s-single-node/.
 
@@ -70,10 +70,11 @@ section of the dashboard, generate EAB credentials for ACME clients. Keep note
 of the key id and hmac key for creating the secret (see `manifests/core/certs/zerossl-cluster-issuer.yaml`).
 
 To issue certificates, I use Route53 dns for validation. This requires an AWS
-key which allows route53 read/write privilege (see `manifests/core/secrets/route53-clusterissuer.yaml`).
+key which allows route53 read/write privilege (see `manifests/core/apps/zerossl-route53-credentials.yaml`).
 
 ### PGP and Sops
 
+We use `sops` (with PGP) to encrypt secrets in our manifests.
 On linux, generate a pgp key using `gpg --generate-key`.
 
 Install sops tool from https://github.com/getsops/sops/releases.
@@ -90,3 +91,10 @@ sops --decrypt --pgp <pgp_key_id> --in-place <secrets_yaml>
 ```
 
 Before applying kustomize, the secrets needs to be decrypted using sops.
+
+## kubectl apply
+
+To apply the manifests, from `manifests/core` directory, run:
+```
+kubectl apply -k .
+```
