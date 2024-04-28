@@ -44,6 +44,24 @@ spec:
             runAsNonRoot: true
             capabilities:
               drop: ["ALL"]
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - -a
+                - $${REDIS_PASSWORD}
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - -a
+                - $${REDIS_PASSWORD}
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 10
           volumeMounts:
             - name: redis-data-vol
               mountPath: /data

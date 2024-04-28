@@ -18,7 +18,8 @@ spec:
         - name: redis-commander
           image: ghcr.io/joeferner/redis-commander:latest
           ports:
-            - containerPort: 8081
+            - name: redis-cmd-port
+              containerPort: 8081
           resources:
             limits:
               memory: 128Mi
@@ -44,7 +45,13 @@ spec:
           livenessProbe:
             httpGet:
               path: /favicon.png
-              port: 8081
+              port: redis-cmd-port
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /favicon.png
+              port: redis-cmd-port
             initialDelaySeconds: 10
             timeoutSeconds: 5
 ---
